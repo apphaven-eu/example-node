@@ -9,6 +9,8 @@ The repository includes the application, a `Dockerfile`, and an `apphaven.yaml` 
 
 - Node.js 22, ES modules
 - Express 5, server-rendered HTML, no client-side framework
+- EJS view at `views/index.ejs`, which escapes `<%= %>` by default; stylesheet served from
+  `public/` and the schema read from `schema.sql`
 - `pg` driver, parameterised SQL, no ORM
 - PostgreSQL 17
 - Container base image `node:22-alpine`, running as the non-root `node` user

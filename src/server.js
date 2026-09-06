@@ -1,7 +1,11 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import express from "express";
 import pg from "pg";
 
-import { renderPage } from "./render.js";
+const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const PORT = Number(process.env.PORT ?? 8080);
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -14,13 +18,7 @@ if (!DATABASE_URL) {
 const pool = new pg.Pool({ connectionString: DATABASE_URL, max: 5 });
 
 async function createSchema() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS todos (
-      id         BIGSERIAL PRIMARY KEY,
-      title      TEXT        NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    )
-  `);
+  await pool.query(await readFile(path.join(ROOT, "schema.sql"), "utf8"));
 }
 
 pool.on("error", (error) => console.error("idle database connection error", error));
@@ -28,6 +26,11 @@ pool.on("error", (error) => console.error("idle database connection error", erro
 const app = express();
 app.disable("x-powered-by");
 app.use(express.urlencoded({ extended: false }));
+
+// EJS escapes <%= %>, so a title containing markup is shown as text.
+app.set("view engine", "ejs");
+app.set("views", path.join(ROOT, "views"));
+app.use(express.static(path.join(ROOT, "public")));
 
 app.get("/healthz", (_req, res) => {
   res.type("text/plain").send("ok");
@@ -38,7 +41,7 @@ app.get("/", async (_req, res, next) => {
     const { rows } = await pool.query(
       "SELECT id, title FROM todos ORDER BY created_at DESC, id DESC",
     );
-    res.type("html").send(renderPage(rows));
+    res.render("index", { todos: rows });
   } catch (error) {
     next(error);
   }
