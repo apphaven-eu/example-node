@@ -1,14 +1,4 @@
-const ENTITIES = {
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  '"': "&quot;",
-  "'": "&#39;",
-};
-
-export function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, (character) => ENTITIES[character]);
-}
+import escapeHtml from "escape-html";
 
 const STYLE = `
   * { box-sizing: border-box; }
